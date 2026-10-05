@@ -3,41 +3,43 @@ name: Build Archeologia Hub APK
 on:
   workflow_dispatch:
   push:
-    paths:
-      - "Archeologia_Hub_ANDROID_PROJECT.zip"
-      - ".github/workflows/build-apk.yml"
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Scarica il progetto
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Configura Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Gradle
+      - name: Configura Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
 
-      - name: Extract Android project
+      - name: Estrai il progetto Android
         run: |
-          unzip -q Archeologia_Hub_ANDROID_PROJECT.zip
-          ls -la
-          find ArcheologiaHubAndroid -maxdepth 3 -type f
+          unzip -o Archeologia_Hub_ANDROID_PROJECT.zip
+          echo "Contenuto progetto:"
+          find ArcheologiaHubAndroid -maxdepth 4 -type f
 
-      - name: Build APK
+      - name: Compila APK
         working-directory: ArcheologiaHubAndroid
-        run: gradle assembleDebug --no-daemon
+        run: |
+          gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK
+      - name: Pubblica APK
         uses: actions/upload-artifact@v4
         with:
           name: Archeologia-Hub-APK
           path: ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
