@@ -27,7 +27,7 @@ jobs:
 
       - name: Estrai il progetto Android
         run: |
-          unzip -o Archeologia_Hub_ANDROID_PROJECT.zip
+          unzip -o Archeologia_Hub_ANDROID_PROJECT_V17_BACK_LOGO.zip
           echo "Contenuto progetto:"
           find ArcheologiaHubAndroid -maxdepth 4 -type f
 
