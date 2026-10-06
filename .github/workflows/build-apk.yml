@@ -11,18 +11,19 @@ permissions:
 
 jobs:
   build-apk:
-    name: Compila Archeologia Hub V26
+    name: Compila Archeologia Hub V27
     runs-on: ubuntu-latest
 
     steps:
+
       # ==========================================
-      # 1. SCARICA IL REPOSITORY
+      # 1 — CHECKOUT
       # ==========================================
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # ==========================================
-      # 2. JAVA 17
+      # 2 — JAVA 17
       # ==========================================
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -31,7 +32,7 @@ jobs:
           java-version: '17'
 
       # ==========================================
-      # 3. GRADLE 8.7
+      # 3 — GRADLE 8.7
       # ==========================================
       - name: Setup Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
@@ -39,28 +40,29 @@ jobs:
           gradle-version: '8.7'
 
       # ==========================================
-      # 4. TROVA ED ESTRAI V26
+      # 4 — TROVA ED ESTRAI V27
       # ==========================================
-      - name: Cerca ed estrai V26
+      - name: Cerca ed estrai V27
         shell: bash
         run: |
           set -e
 
-          ZIP="Archeologia_Hub_V26_TRASCRIZIONE_BUILD_FIX.zip"
+          ZIP="Archeologia_Hub_V27_STABLE.zip"
 
-          echo "======================================"
-          echo "ARCheologia Hub V26"
-          echo "======================================"
+          echo "========================================"
+          echo "   ARCHEOLOGIA HUB — BUILD V27"
+          echo "========================================"
 
-          echo "Controllo presenza del file ZIP..."
+          echo ""
+          echo "File presenti nel repository:"
           ls -lah
 
           if [ ! -f "$ZIP" ]; then
             echo ""
-            echo "ERRORE: $ZIP non trovato."
+            echo "ERRORE: $ZIP NON TROVATO."
             echo ""
-            echo "File presenti nella root:"
-            find . -maxdepth 1 -type f -printf '%f\n'
+            echo "ZIP presenti:"
+            find . -maxdepth 1 -type f -name "*.zip" -printf '%f\n'
             exit 1
           fi
 
@@ -68,142 +70,176 @@ jobs:
           echo "ZIP trovato:"
           ls -lh "$ZIP"
 
-          echo ""
-          echo "Estraggo il progetto..."
-
           rm -rf ArcheologiaHubAndroid
 
+          echo ""
+          echo "Estrazione progetto..."
           unzip -q -o "$ZIP"
 
           echo ""
-          echo "Contenuto estratto:"
+          echo "Struttura del progetto:"
           find ArcheologiaHubAndroid -maxdepth 5 -type f | sort
 
-          # --------------------------------------
-          # Controllo struttura Gradle
-          # --------------------------------------
+          # ======================================
+          # CONTROLLI STRUTTURA
+          # ======================================
 
           if [ ! -f "ArcheologiaHubAndroid/settings.gradle" ]; then
-            echo ""
-            echo "ERRORE: settings.gradle non trovato."
+            echo "ERRORE: settings.gradle mancante."
             exit 1
           fi
 
           if [ ! -f "ArcheologiaHubAndroid/app/build.gradle" ]; then
-            echo ""
-            echo "ERRORE: app/build.gradle non trovato."
+            echo "ERRORE: app/build.gradle mancante."
             exit 1
           fi
 
           if [ ! -f "ArcheologiaHubAndroid/app/src/main/java/it/archeologia/hub/MainActivity.java" ]; then
-            echo ""
-            echo "ERRORE: MainActivity.java V26 non trovato."
+            echo "ERRORE: MainActivity.java mancante."
             exit 1
           fi
 
           echo ""
-          echo "======================================"
-          echo "V26 VERIFICATA CORRETTAMENTE"
-          echo "======================================"
+          echo "========================================"
+          echo "   PROGETTO V27 TROVATO CORRETTAMENTE"
+          echo "========================================"
 
       # ==========================================
-      # 5. CONTROLLO GRADLE
+      # 5 — VERIFICA VERSIONE
       # ==========================================
-      - name: Controllo progetto Gradle
+      - name: Verifica configurazione V27
+        working-directory: ArcheologiaHubAndroid
+        shell: bash
+        run: |
+          set -e
+
+          echo "Controllo build.gradle..."
+
+          grep -n "versionCode" app/build.gradle
+          grep -n "versionName" app/build.gradle
+
+          echo ""
+          echo "Controllo MainActivity..."
+
+          grep -n "V27" app/src/main/java/it/archeologia/hub/MainActivity.java || true
+
+          echo ""
+          echo "Controllo chiamata Vosk..."
+
+          grep -n "acceptWaveForm" app/src/main/java/it/archeologia/hub/MainActivity.java
+
+          echo ""
+          echo "Configurazione V27 verificata."
+
+      # ==========================================
+      # 6 — GRADLE INFO
+      # ==========================================
+      - name: Controllo Gradle
         working-directory: ArcheologiaHubAndroid
         run: |
           set -e
 
-          echo "======================================"
-          echo "VERSIONE GRADLE"
-          echo "======================================"
+          echo "========================================"
+          echo "   VERSIONE GRADLE"
+          echo "========================================"
 
           gradle --version
 
           echo ""
-          echo "======================================"
-          echo "TASK GRADLE"
-          echo "======================================"
+          echo "========================================"
+          echo "   TASK GRADLE"
+          echo "========================================"
 
           gradle tasks --no-daemon --stacktrace
 
       # ==========================================
-      # 6. COMPILAZIONE APK
+      # 7 — CLEAN
       # ==========================================
-      - name: Compila APK Debug V26
+      - name: Pulizia progetto
         working-directory: ArcheologiaHubAndroid
         run: |
           set -e
 
-          echo "======================================"
-          echo "PULIZIA BUILD"
-          echo "======================================"
+          echo "Pulizia build precedenti..."
 
-          gradle clean --no-daemon
+          gradle clean --no-daemon --stacktrace
 
-          echo ""
-          echo "======================================"
-          echo "COMPILAZIONE APK V26"
-          echo "======================================"
+      # ==========================================
+      # 8 — BUILD APK
+      # ==========================================
+      - name: Compila APK Debug V27
+        working-directory: ArcheologiaHubAndroid
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "   COMPILAZIONE APK V27"
+          echo "========================================"
 
           gradle assembleDebug --no-daemon --stacktrace
 
+          echo ""
+          echo "Compilazione terminata."
+
       # ==========================================
-      # 7. VERIFICA APK
+      # 9 — VERIFICA APK
       # ==========================================
-      - name: Verifica APK
+      - name: Verifica APK generato
         shell: bash
         run: |
           set -e
 
           APK="ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk"
 
-          echo "======================================"
-          echo "VERIFICA APK"
-          echo "======================================"
+          echo "========================================"
+          echo "   CONTROLLO APK"
+          echo "========================================"
 
           if [ ! -f "$APK" ]; then
             echo ""
             echo "ERRORE: APK NON GENERATO."
             echo ""
-            echo "File presenti nella cartella build:"
+            echo "Contenuto build:"
             find ArcheologiaHubAndroid/app/build -type f | sort || true
             exit 1
           fi
 
           echo ""
-          echo "======================================"
-          echo "APK GENERATO CORRETTAMENTE"
-          echo "======================================"
-
+          echo "APK TROVATO:"
           ls -lh "$APK"
 
+          echo ""
+          echo "========================================"
+          echo "   APK GENERATO CORRETTAMENTE"
+          echo "========================================"
+
       # ==========================================
-      # 8. CARICA APK COME ARTIFACT
+      # 10 — UPLOAD APK
       # ==========================================
       - name: Carica APK
         uses: actions/upload-artifact@v4
         with:
-          name: Archeologia-Hub-V26-APK
+          name: Archeologia-Hub-V27-APK
           path: ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
 
       # ==========================================
-      # 9. RIEPILOGO FINALE
+      # 11 — RIEPILOGO
       # ==========================================
-      - name: Riepilogo build
+      - name: Riepilogo finale
         shell: bash
         run: |
           echo ""
           echo "=============================================="
-          echo "      ARCHEOLOGIA HUB V26 COMPLETATA"
+          echo "      ARCHEOLOGIA HUB V27"
+          echo "      BUILD COMPLETATA"
           echo "=============================================="
           echo ""
           echo "APK:"
           echo "ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk"
           echo ""
-          echo "Artifact:"
-          echo "Archeologia-Hub-V26-APK"
+          echo "ARTIFACT:"
+          echo "Archeologia-Hub-V27-APK"
           echo ""
           echo "=============================================="
