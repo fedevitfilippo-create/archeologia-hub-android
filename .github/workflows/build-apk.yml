@@ -37,7 +37,7 @@ jobs:
           ZIP="$(find . -maxdepth 1 -type f -name 'Archeologia_Hub_V24_TRANSCRIZIONE_REALE.zip' -print -quit)"
 
           if [ -z "$ZIP" ]; then
-            echo "ERRORE: Archeologia_Hub_V24_TRANSCRIZIONE_REALE.zip non trovato."
+            echo "ERRORE: Archeologia_Hub_V25_TRASCRIZIONE_FIX.zip non trovato."
             echo "File presenti:"
             ls -la
             exit 1
