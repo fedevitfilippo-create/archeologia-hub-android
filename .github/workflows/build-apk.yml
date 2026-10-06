@@ -25,12 +25,11 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Estrai il progetto Android
+    - name: Estrai il progetto Android
   run: |
     unzip -o Archeologia_Hub_V24_TRANSCRIZIONE_REALE.zip
     echo "Contenuto progetto:"
     find ArcheologiaHubAndroid -maxdepth 4 -type f
-          find ArcheologiaHubAndroid -maxdepth 4 -type f
 
       - name: Compila APK
         working-directory: ArcheologiaHubAndroid
