@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-apk:
-    name: Compila Archeologia Hub V24
+    name: Compila Archeologia Hub V25
     runs-on: ubuntu-latest
 
     steps:
@@ -29,64 +29,95 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Find and extract V24 project
+      - name: Cerca ed estrai V25
         shell: bash
         run: |
           set -e
 
-          ZIP="$(find . -maxdepth 1 -type f -name 'Archeologia_Hub_V24_TRANSCRIZIONE_REALE.zip' -print -quit)"
+          ZIP="Archeologia_Hub_V25_TRASCRIZIONE_FIX.zip"
 
-          if [ -z "$ZIP" ]; then
-            echo "ERRORE: Archeologia_Hub_V25_TRASCRIZIONE_FIX.zip non trovato."
-            echo "File presenti:"
-            ls -la
+          echo "Controllo presenza del file:"
+          ls -lah
+
+          if [ ! -f "$ZIP" ]; then
+            echo "ERRORE: $ZIP non trovato."
+            echo "I file presenti nella root sono:"
+            find . -maxdepth 1 -type f -printf '%f\n'
             exit 1
           fi
 
-          echo "ZIP trovato: $ZIP"
+          echo "Trovato: $ZIP"
+          echo "Estraggo il progetto..."
+
           rm -rf ArcheologiaHubAndroid
           unzip -q -o "$ZIP"
 
+          echo "Contenuto estratto:"
+          find ArcheologiaHubAndroid -maxdepth 5 -type f | sort
+
           if [ ! -f "ArcheologiaHubAndroid/settings.gradle" ]; then
-            echo "ERRORE: progetto Android V24 non trovato."
-            find . -maxdepth 4 -type f | sort
+            echo "ERRORE: settings.gradle non trovato."
             exit 1
           fi
 
-          echo "Progetto V24 pronto:"
-          find ArcheologiaHubAndroid -maxdepth 5 -type f | sort
+          if [ ! -f "ArcheologiaHubAndroid/app/build.gradle" ]; then
+            echo "ERRORE: app/build.gradle non trovato."
+            exit 1
+          fi
 
-      - name: Check Gradle project
+          if [ ! -f "ArcheologiaHubAndroid/app/src/main/java/it/archeologia/hub/MainActivity.java" ]; then
+            echo "ERRORE: MainActivity.java V25 non trovato."
+            exit 1
+          fi
+
+          echo "V25 verificata correttamente."
+
+      - name: Controllo progetto Gradle
         working-directory: ArcheologiaHubAndroid
         run: |
+          echo "Gradle:"
           gradle --version
+
+          echo "Verifico i task:"
           gradle tasks --no-daemon --stacktrace
 
-      - name: Build debug APK
+      - name: Compila APK Debug V25
         working-directory: ArcheologiaHubAndroid
         run: |
-          gradle clean assembleDebug --no-daemon --stacktrace
+          set -e
 
-      - name: Verify APK
+          echo "Pulizia build precedente..."
+          gradle clean --no-daemon
+
+          echo "Compilazione APK..."
+          gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Verifica APK
         shell: bash
         run: |
           set -e
 
           APK="ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk"
 
+          echo "Controllo APK..."
+
           if [ ! -f "$APK" ]; then
-            echo "ERRORE: APK non generato."
+            echo "ERRORE: APK NON GENERATO."
+            echo "File nella cartella build:"
             find ArcheologiaHubAndroid/app/build -type f | sort || true
             exit 1
           fi
 
-          echo "APK generato correttamente:"
+          echo "======================================"
+          echo "APK GENERATO CORRETTAMENTE"
+          echo "======================================"
+
           ls -lh "$APK"
 
-      - name: Upload APK
+      - name: Carica APK
         uses: actions/upload-artifact@v4
         with:
-          name: Archeologia-Hub-V24-APK
+          name: Archeologia-Hub-V25-APK
           path: ArcheologiaHubAndroid/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
